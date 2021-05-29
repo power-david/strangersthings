@@ -1,3 +1,5 @@
+// const { nextTick } = require("process")
+
 const BASE_URL = "https://strangers-things.herokuapp.com/api/2102-CPU-RM-WEB-PT"
 
 const fetchPosts = async () => {
@@ -36,9 +38,9 @@ function createPostHtml(post) {
             <li class="list-group-item"><b>Price:</b> ${price}</li>
         </ul>
     <div class="card-body" id="bottom-card">
-    <a href="#" id="" class="card-link">Edit</a>
+    <a href="#" id="edit-button" class="card-link">Edit</a>
     <a href="#" id="delete-button" class="card-link">Delete</a>
-    <a href="#" id="" class="card-link">Message Seller</a>
+    <a href="#" id="message-button" class="card-link">Message Seller</a>
 
     </div>
     </div>
@@ -87,7 +89,7 @@ const loginUser = async (usernameValue, passwordValue) => {
         const { data: {token} } = await response.json();
         localStorage.setItem("token", JSON.stringify(token))
         hideLogin();
-
+        hideRegistration();
     } catch(error) {
         console.error(error);
     }
@@ -155,11 +157,12 @@ $("#blog-post").on("submit", (e)  => {
 
 const editBlogEntry = async (requestBody, postId) => {
 	try {
+        const token = JSON.parse(localStorage.getItem("token"))
 		const request = await fetch(`${BASE_URL}/posts/${postId}`, {
 			method: "PATCH", 
 			headers: {
 				"Content-Type": "application/json",
-				"Authorization": "Bearer " + JSON.parse(localStorage.getItem("token"))
+				"Authorization": `Bearer ${ token }`
 			},
 			body: JSON.stringify(requestBody),
 		})
@@ -167,6 +170,93 @@ const editBlogEntry = async (requestBody, postId) => {
 		console.error(e)
 	}
 }
+
+// This function is only going to work if we have HTML in your HTML
+// file that will show what your edit modal should look like
+
+// This click handler will be to actually toggle open the edit modal
+$('#posts').on('click', '#edit-button', function (){
+
+    $('#exampleModal').modal('show')
+    $('#exampleModal .modal-body').empty()
+    $('#exampleModal .modal-body').append(`
+    <form id="blog-post">
+    <div class="form-group">
+        <label class="mb-2" for="blog-title">Title</label>
+        <input
+            class="form-control"
+            id="blog-title"
+            type="text"
+            placeholder=""
+            required
+        />
+    </div>
+    <div class="form-group">
+        <label for="blog-description" class="mb-2">Item Description</label>
+        <textarea
+            class="form-control"
+            name="blog-description"
+            id="blog-description"
+            cols="30"
+            rows="10"
+            placeholder="Blog Description"
+            required
+        >
+        </textarea>
+    </div>
+    <div class="form-group">
+        <label for="blog-price" class="mb-2">Price</label>
+        <input
+            type="text"
+            class="form-control"
+            id="blog-price"
+            placeholder=""
+            required
+        />
+</div>
+</form>
+    `)
+/* <div class="form-group">
+    <label for="blog-author" class="mb-2">Author</label>
+    <input
+        type="text"
+        class="form-control"
+        id="blog-author"
+        placeholder=""
+        required
+    />
+</div> */
+
+})
+
+// Another click handler which will work on the edit modal's submit button 
+$('#submit-edit-btn').on('submit', async (event) => {
+    event.preventDefault()
+    console.log('Edit Submit Successful')
+    // Here make a variable that holds the info from the nearest post
+    const blogTitle = $("#blog-title").val()
+    const blogDescription = $("#blog-description").val()
+    const blogPrice = $("#blog-price").val()
+    
+    const requestBody = {
+        post: 
+        {
+            title: blogTitle,
+            description: blogDescription,
+            price: blogPrice,
+        }
+    }
+
+    try {
+        // Make your actual request using your edit post function - be sure to use await
+        
+        const result = await editBlogEntry(requestBody, card.post._id)
+
+        
+    } catch(e) {
+        console.error(e)
+    }
+})
 
 const deleteBlogEntry = async (postId) => {
     const token = JSON.parse(localStorage.getItem('token'))
@@ -253,7 +343,7 @@ $('#posts').on('click', '#delete-button', function () {
 });
 
 $('#logout-button').on('click', function () {
-    localStorage.removeItem('token')
+    localStorage.clear()
 });
 
 (async () => {
