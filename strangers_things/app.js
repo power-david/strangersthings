@@ -130,6 +130,28 @@ const postBlogEntry = async (requestBody) => {
     }
 }
 
+const fetchMyUser = async () => {
+    const token = JSON.parse(localStorage.getItem('token'))
+    try {
+        const myUser = await fetch(`${BASE_URL}/users/me`, {
+            headers: {
+              Authorization: `Bearer ${ token }`
+            }
+          })
+        const result = await myUser.json()
+
+        return result;
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+const fetchPostsByUser = async () => {
+    const user = await fetchPosts()
+    const post = await fetchMyUser()
+    renderPosts(post, user)
+}
+
 $("#blog-post").on("submit", (e)  => {
     e.preventDefault()
 
@@ -250,7 +272,7 @@ $('#submit-edit-btn').on('submit', async (event) => {
     try {
         // Make your actual request using your edit post function - be sure to use await
         
-        const result = await editBlogEntry(requestBody, card.post._id)
+        const result = await editBlogEntry(requestBody, post._id)
 
         
     } catch(e) {
